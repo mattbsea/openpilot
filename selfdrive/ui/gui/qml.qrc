@@ -1,0 +1,36 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>../../assets/fonts/courbd.ttf</file>
+        <file>../../assets/fonts/opensans_bold.ttf</file>
+        <file>../../assets/fonts/opensans_regular.ttf</file>
+        <file>../../assets/fonts/opensans_semibold.ttf</file>
+        <file>../../assets/images/battery.png</file>
+        <file>../../assets/images/battery_charging.png</file>
+        <file>../../assets/images/button_home.png</file>
+        <file>../../assets/images/button_settings.png</file>
+        <file>../../assets/images/network_0.png</file>
+        <file>../../assets/images/network_1.png</file>
+        <file>../../assets/images/network_2.png</file>
+        <file>../../assets/images/network_3.png</file>
+        <file>../../assets/images/network_4.png</file>
+        <file>../../assets/images/network_5.png</file>
+        <file>../../assets/sounds/disengaged.wav</file>
+        <file>../../assets/sounds/engaged.wav</file>
+        <file>../../assets/sounds/error.wav</file>
+        <file>../../assets/sounds/warning_1.wav</file>
+        <file>../../assets/sounds/warning_2.wav</file>
+        <file>../../assets/sounds/warning_repeat.wav</file>
+        <file>../../assets/img_chffr_wheel.png</file>
+        <file>../../assets/img_driver_face.png</file>
+        <file>../../assets/img_map.png</file>
+        <file>../../assets/img_spinner_comma.png</file>
+        <file>../../assets/img_spinner_track.png</file>
+        <file>../../assets/img_trafficLight_green.png</file>
+        <file>../../assets/img_trafficLight_none.png</file>
+        <file>../../assets/img_trafficLight_red.png</file>
+        <file>../../assets/img_trafficLight_yellow.png</file>
+        <file>../../assets/img_trafficSign_stop.png</file>
+        <file>../../assets/img_trafficSign_turn.png</file>
+    </qresource>
+</RCC>

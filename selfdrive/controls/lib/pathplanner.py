@@ -10,6 +10,7 @@ from common.params import Params
 import cereal.messaging as messaging
 from cereal import log
 from common.op_params import opParams
+from selfdrive.controls.lib.curvature_learner import CurvatureLearner
 
 LaneChangeState = log.PathPlan.LaneChangeState
 LaneChangeDirection = log.PathPlan.LaneChangeDirection
@@ -67,6 +68,8 @@ class PathPlanner():
     self.alca_nudge_required = self.op_params.get('alca_nudge_required', default=True)
     self.alca_min_speed = self.op_params.get('alca_min_speed', default=30.0) * CV.MPH_TO_MS
 
+    self.curvature_offset = CurvatureLearner(debug=False)
+
   def setup_mpc(self):
     self.libmpc = libmpc_py.libmpc
     self.libmpc.init(MPC_COST_LAT.PATH, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, self.steer_rate_cost)
@@ -98,7 +101,12 @@ class PathPlanner():
     sr = max(sm['liveParameters'].steerRatio, 0.1)
     VM.update_params(x, sr)
 
-    curvature_factor = VM.curvature_factor(v_ego)
+    if active:
+      curvfac = self.curvature_offset.update(angle_steers - angle_offset, self.LP.d_poly, v_ego)
+    else:
+      curvfac = 0.
+
+    curvature_factor = VM.curvature_factor(v_ego) + curvfac
 
     self.LP.parse_model(sm['model'])
 

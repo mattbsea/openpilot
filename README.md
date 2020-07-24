@@ -177,3 +177,12 @@ Videos
 Here's a short video showing how close the traffic profile was in `0.7.4`. In `0.7.5`, the traffic profile is an average of 7.371 feet closer from 18 mph to 90 mph. Video thanks to [@rolo01](https://github.com/rolo01)!
 
 [![](https://img.youtube.com/vi/sGsODeP_G_c/0.jpg)](https://www.youtube.com/watch?v=sGsODeP_G_c)
+
+This works for any car, is very close to stock.
+
+**If this doesn't work, ie you get "Ping Pong", ensure your steer ratio is correct - the factory end to end ratio in interface.py and submit a PR!**
+
+It contains a learner to learn your curvature factor. This means no more hugging curves, and has some ability to autotune controls.
+
+Video here
+https://www.youtube.com/watch?v=Jupwoqf3w9I&feature=youtu.be

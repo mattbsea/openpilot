@@ -5,6 +5,7 @@ from selfdrive.swaglog import cloudlog
 from selfdrive.controls.lib.lateral_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LAT
 from selfdrive.controls.lib.lane_planner import LanePlanner
+from selfdrive.controls.lib.curvature_learner import CurvatureLearner
 from selfdrive.config import Conversions as CV
 from common.params import Params
 import cereal.messaging as messaging
@@ -56,18 +57,20 @@ class PathPlanner():
 
     self.setup_mpc()
     self.solution_invalid_cnt = 0
+    self.frame = 0
+    self.curvature_offset = CurvatureLearner(debug=False)
+
+  def setup_mpc(self):
     self.lane_change_enabled = Params().get('LaneChangeEnabled') == b'1'
     self.lane_change_state = LaneChangeState.off
     self.lane_change_direction = LaneChangeDirection.none
     self.lane_change_timer = 0.0
     self.lane_change_ll_prob = 1.0
     self.prev_one_blinker = False
-
     self.op_params = opParams()
     self.alca_nudge_required = self.op_params.get('alca_nudge_required', default=True)
     self.alca_min_speed = self.op_params.get('alca_min_speed', default=30.0) * CV.MPH_TO_MS
 
-  def setup_mpc(self):
     self.libmpc = libmpc_py.libmpc
     self.libmpc.init(MPC_COST_LAT.PATH, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, self.steer_rate_cost)
 
@@ -98,7 +101,11 @@ class PathPlanner():
     sr = max(sm['liveParameters'].steerRatio, 0.1)
     VM.update_params(x, sr)
 
-    curvature_factor = VM.curvature_factor(v_ego)
+    if active:
+      curvfac = self.curvature_offset.update(angle_steers - angle_offset, self.LP.d_poly, v_ego)
+    else:
+      curvfac = 0.
+    curvature_factor = VM.curvature_factor(v_ego) + curvfac
 
     self.LP.parse_model(sm['model'])
 

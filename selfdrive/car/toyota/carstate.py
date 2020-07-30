@@ -5,7 +5,6 @@ from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_STOP_TIMER_CAR
-from selfdrive.config import MPH_TO_KPH
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -21,6 +20,12 @@ class CarState(CarStateBase):
     # Need to apply an offset as soon as the steering angle measurements are both received
     self.needs_angle_offset = CP.carFingerprint not in TSS2_CAR
     self.angle_offset = 0.
+
+    self.debug = True
+    self.invalid_tsgn1 = False
+    self.tsgn1 = 0
+    if self.debug:
+      self.spdval_log = open("/data/rsa_data.log", "a")
 
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
@@ -107,11 +112,21 @@ class CarState(CarStateBase):
       ret.leftBlindspot = (cp.vl["BSM"]['L_ADJACENT'] == 1) or (cp.vl["BSM"]['L_APPROACHING'] == 1)
       ret.rightBlindspot = (cp.vl["BSM"]['R_ADJACENT'] == 1) or (cp.vl["BSM"]['R_APPROACHING'] == 1)
 
-    spdval1 = cp_cam.vl["RSA1"]['SPDVAL1']
+    spdval1 = 0
     tsgn1 = cp_cam.vl["RSA1"]['TSGN1']
     if tsgn1 == 36:
       # spdval1 given in MPH, convert to KPH
-      spdval1 *= MPH_TO_KPH
+      spdval1 = CV.MPH_TO_KPH * cp_cam.vl["RSA1"]['SPDVAL1']
+      self.invalid_tsgn1 = False
+    elif tsgn1 == 1:
+      spdval1 = cp_cam.vl["RSA1"]['SPDVAL1']
+      self.invalid_tsgn1 = False
+    elif self.debug:
+      if tsgn1 != self.tsgn1 or not self.invalid_tsgn1:
+        self.tsgn1 = tsgn1
+        self.invalid_tsgn1 = True
+        self.rsa_log.write(f"Unknown TSGN1: {tsgn1}, {cp_cam.vl["RSA1"]} {cp_cam.vl["RSA2"]}")
+        self.rsa_log.flush()
 
     ret.postedSpeedLimit = spdval1
 

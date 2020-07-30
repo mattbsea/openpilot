@@ -5,6 +5,7 @@ from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_STOP_TIMER_CAR
+from datetime import datetime
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -158,9 +159,11 @@ class CarState(CarStateBase):
     if not do_log:
       return
     
+    self.rsa_log.write(str(datetime.now()) + "\n")
+
     for addr in self.rsa.keys():
       for sig, val in self.rsa[addr].items():
-        self.rsa_log.write(f"{addr}{sig} = {val}\n")
+        self.rsa_log.write(f"{addr}.{sig} = {val}\n")
 
     self.rsa_log.write("\n")
     self.rsa_log.flush()

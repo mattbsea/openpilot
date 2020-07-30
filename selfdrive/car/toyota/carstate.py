@@ -22,8 +22,7 @@ class CarState(CarStateBase):
     self.angle_offset = 0.
 
     self.debug = True
-    self.invalid_tsgn1 = False
-    self.tsgn1 = 0
+    self.rsa = {}
     if self.debug:
       self.rsa_log = open("/data/rsa_data.log", "a")
 
@@ -117,20 +116,54 @@ class CarState(CarStateBase):
     if tsgn1 == 36:
       # spdval1 given in MPH, convert to KPH
       spdval1 = CV.MPH_TO_KPH * cp_cam.vl["RSA1"]['SPDVAL1']
-      self.invalid_tsgn1 = False
     elif tsgn1 == 1:
       spdval1 = cp_cam.vl["RSA1"]['SPDVAL1']
-      self.invalid_tsgn1 = False
-    elif self.debug:
-      if tsgn1 != self.tsgn1 or not self.invalid_tsgn1:
-        self.tsgn1 = tsgn1
-        self.invalid_tsgn1 = True
-        self.rsa_log.write(f"Unknown TSGN1: {tsgn1} {spdval1}")
-        self.rsa_log.flush()
+    else:
+      spdval1 = 0
+
+    if self.debug:
+      self.log_rsa_data(cp_cam)
 
     ret.postedSpeedLimit = spdval1
 
     return ret
+
+  def log_rsa_data(self, cp_cam):
+    signals = [
+      ("TSGN1", "RSA1", 0),
+      ("SPDVAL1", "RSA1", 0),
+      ("SPLSGN1", "RSA1", 0),
+      ("TSGN2", "RSA1", 0),
+      ("SPDVAL2", "RSA1", 0),
+      ("SPLSGN2", "RSA1", 0),
+      ("TSGN3", "RSA2", 0),
+      ("SPLSGN3", "RSA2", 0),
+      ("TSGN4", "RSA2", 0),
+      ("SPLSGN4", "RSA2", 0),
+    ]
+
+    do_log = False
+    for sig, addr, _ in signals:
+      if self.rsa.get(addr) is None:
+        self.rsa[addr] = {}
+
+      val = cp_cam.vl[addr][sig]
+      last = self.rsa[addr].get(sig)
+            
+      if val != last:
+        do_log = True
+      
+      self.rsa[addr][sig] = val
+    
+    if not do_log:
+      return
+    
+    for addr in self.rsa.keys():
+      for sig, val in self.rsa[addr].items():
+        self.rsa_log.write(f"{addr}{sig} = {val}\n")
+
+    self.rsa_log.write("\n")
+    self.rsa_log.flush()
 
   @staticmethod
   def get_can_parser(CP):
@@ -212,7 +245,7 @@ class CarState(CarStateBase):
       ("SPDVAL1", "RSA1", 0),
       ("SPLSGN1", "RSA1", 0),
       ("TSGN2", "RSA1", 0),
-      #("SPDVAL2", "RSA1", 0),
+      ("SPDVAL2", "RSA1", 0),
       ("SPLSGN2", "RSA1", 0),
       ("TSGN3", "RSA2", 0),
       ("SPLSGN3", "RSA2", 0),

@@ -5,7 +5,7 @@ from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_STOP_TIMER_CAR
-
+from selfdrive.config import MPH_TO_KPH
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -107,6 +107,14 @@ class CarState(CarStateBase):
       ret.leftBlindspot = (cp.vl["BSM"]['L_ADJACENT'] == 1) or (cp.vl["BSM"]['L_APPROACHING'] == 1)
       ret.rightBlindspot = (cp.vl["BSM"]['R_ADJACENT'] == 1) or (cp.vl["BSM"]['R_APPROACHING'] == 1)
 
+    spdval1 = cp_cam.vl["RSA1"]['SPDVAL1']
+    tsgn1 = cp_cam.vl["RSA1"]['TSGN1']
+    if tsgn1 == 36:
+      # spdval1 given in MPH, convert to KPH
+      spdval1 *= MPH_TO_KPH
+
+    ret.postedSpeedLimit = spdval1
+
     return ret
 
   @staticmethod
@@ -182,7 +190,20 @@ class CarState(CarStateBase):
   @staticmethod
   def get_cam_can_parser(CP):
 
-    signals = [("FORCE", "PRE_COLLISION", 0), ("PRECOLLISION_ACTIVE", "PRE_COLLISION", 0)]
+    signals = [
+      ("FORCE", "PRE_COLLISION", 0), 
+      ("PRECOLLISION_ACTIVE", "PRE_COLLISION", 0),
+      ("TSGN1", "RSA1", 0),
+      ("SPDVAL1", "RSA1", 0),
+      ("SPLSGN1", "RSA1", 0),
+      ("TSGN2", "RSA1", 0),
+      #("SPDVAL2", "RSA1", 0),
+      ("SPLSGN2", "RSA1", 0),
+      ("TSGN3", "RSA2", 0),
+      ("SPLSGN3", "RSA2", 0),
+      ("TSGN4", "RSA2", 0),
+      ("SPLSGN4", "RSA2", 0),
+    ]
 
     # use steering message to check if panda is connected to frc
     checks = [("STEERING_LKA", 42)]

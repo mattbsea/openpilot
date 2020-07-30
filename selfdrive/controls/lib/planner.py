@@ -126,7 +126,11 @@ class Planner():
     v_cruise_kph = sm['controlsState'].vCruise
     force_slow_decel = sm['controlsState'].forceDecel
 
-    v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX)
+    postedSpeedLimit = sm['carState'].postedSpeedLimit * 1.15
+    if postedSpeedLimit == 0:
+      postedSpeedLimit = V_CRUISE_MAX
+
+    v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX, postedSpeedLimit)
     v_cruise_setpoint = v_cruise_kph * CV.KPH_TO_MS
 
     lead_1 = sm['radarState'].leadOne

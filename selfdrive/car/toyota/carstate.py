@@ -25,7 +25,7 @@ class CarState(CarStateBase):
     self.invalid_tsgn1 = False
     self.tsgn1 = 0
     if self.debug:
-      self.spdval_log = open("/data/rsa_data.log", "a")
+      self.rsa_log = open("/data/rsa_data.log", "a")
 
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
@@ -125,7 +125,7 @@ class CarState(CarStateBase):
       if tsgn1 != self.tsgn1 or not self.invalid_tsgn1:
         self.tsgn1 = tsgn1
         self.invalid_tsgn1 = True
-        self.rsa_log.write(f"Unknown TSGN1: {tsgn1}, {cp_cam.vl["RSA1"]} {cp_cam.vl["RSA2"]}")
+        self.rsa_log.write(f"Unknown TSGN1: {tsgn1} {spdval1}")
         self.rsa_log.flush()
 
     ret.postedSpeedLimit = spdval1

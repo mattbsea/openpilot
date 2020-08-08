@@ -180,7 +180,7 @@ struct CarState {
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
 
   # Speed Limit Sign Recognition in KPH
-  postedSpeedLimit @35 : Float32;
+  postedSpeedLimit @37 : Float32;
 
   struct WheelSpeeds {
     # optional wheel speeds

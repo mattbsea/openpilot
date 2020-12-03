@@ -6,9 +6,9 @@ from selfdrive.controls.lib.dynamic_camera_offset import DynamicCameraOffset
 STANDARD_CAMERA_OFFSET = 0.06  # m from center car to camera (DO NOT CHANGE THIS)
 
 
-def compute_path_pinv(l=50):
+def compute_path_pinv(length=50):
   deg = 3
-  x = np.arange(l*1.0)
+  x = np.arange(length*1.0)
   X = np.vstack(tuple(x**n for n in range(deg, -1, -1))).T
   pinv = np.linalg.pinv(X)
   return pinv
@@ -92,8 +92,8 @@ class LanePlanner():
     self.r_prob = md.rightLane.prob  # right line prob
 
     if len(md.meta.desireState):
-      self.l_lane_change_prob = md.meta.desireState[log.PathPlan.Desire.laneChangeLeft - 1]
-      self.r_lane_change_prob = md.meta.desireState[log.PathPlan.Desire.laneChangeRight - 1]
+      self.l_lane_change_prob = md.meta.desireState[log.PathPlan.Desire.laneChangeLeft]
+      self.r_lane_change_prob = md.meta.desireState[log.PathPlan.Desire.laneChangeRight]
 
   def update_d_poly(self, v_ego, angle_steers, active):
     # only offset left and right lane lines; offsetting p_poly does not make sense since it's path for camera not car
@@ -103,8 +103,26 @@ class LanePlanner():
     if CAMERA_OFFSET != STANDARD_CAMERA_OFFSET:
       self.p_poly[3] += CAMERA_OFFSET - STANDARD_CAMERA_OFFSET  # only offst path based on difference of new offset and standard
 
+    # Reduce reliance on lanelines that are too far apart or
+    # will be in a few seconds
+    l_prob, r_prob = self.l_prob, self.r_prob
+    width_poly = self.l_poly - self.r_poly
+    prob_mods = []
+    for t_check in [0.0, 1.5, 3.0]:
+      width_at_t = eval_poly(width_poly, t_check * (v_ego + 7))
+      prob_mods.append(interp(width_at_t, [4.0, 5.0], [1.0, 0.0]))
+    mod = min(prob_mods)
+    l_prob *= mod
+    r_prob *= mod
+
+    # Reduce reliance on uncertain lanelines
+    l_std_mod = interp(self.l_std, [.15, .3], [1.0, 0.0])
+    r_std_mod = interp(self.r_std, [.15, .3], [1.0, 0.0])
+    l_prob *= l_std_mod
+    r_prob *= r_std_mod
+
     # Find current lanewidth
-    self.lane_width_certainty += 0.05 * (self.l_prob * self.r_prob - self.lane_width_certainty)
+    self.lane_width_certainty += 0.05 * (l_prob * r_prob - self.lane_width_certainty)
     current_lane_width = abs(self.l_poly[3] - self.r_poly[3])
     self.lane_width_estimate += 0.005 * (current_lane_width - self.lane_width_estimate)
     speed_lane_width = interp(v_ego, [0., 31.], [2.8, 3.5])
